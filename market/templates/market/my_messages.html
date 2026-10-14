@@ -1,0 +1,22 @@
+{% extends "cabinet_base.html" %}
+{% block title %}Сообщения — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="page-head"><h1>Сообщения</h1></div>
+{% if page.object_list %}
+<ul class="rows">
+  {% for d in page.object_list %}
+  <li class="row-item">
+    <a class="thumb-sm" href="{% url 'request_detail' d.pk %}">{% with c=d.listing.cover %}{% if c %}<img src="{{ c.image.url }}" alt="">{% else %}<svg class="i"><use href="#i-image"/></svg>{% endif %}{% endwith %}</a>
+    <div class="row-main">
+      <a class="row-title" href="{% url 'request_detail' d.pk %}">{{ d.listing.title }}</a>
+      <span class="muted">{% if d.listing.seller_id == user.id %}{{ d.buyer.display_name }}{% else %}{{ d.listing.seller.display_name }}{% endif %}{% if d.last_at %} · {{ d.last_at|date:"d.m.Y H:i" }}{% endif %}</span>
+    </div>
+    <a class="btn btn-outline btn-sm" href="{% url 'request_detail' d.pk %}">Открыть</a>
+  </li>
+  {% endfor %}
+</ul>
+{% include "_pagination.html" %}
+{% else %}
+<div class="empty"><p>Переписок пока нет. Они появятся, когда вы отправите заявку или получите её.</p><a class="btn btn-outline" href="{% url 'catalog' %}">В каталог</a></div>
+{% endif %}
+{% endblock %}

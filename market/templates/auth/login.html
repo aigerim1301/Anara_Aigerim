@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Вход — CampusMarket{% endblock %}
+{% block content %}
+<div class="container auth section">
+  <form method="post" class="panel form" data-loading>
+    <h1>Вход</h1>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}{% include "_field.html" %}{% endfor %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn btn-primary btn-block" type="submit">Войти</button>
+    <p class="muted center">Нет аккаунта? <a href="{% url 'register' %}">Зарегистрируйтесь</a></p>
+  </form>
+</div>
+{% endblock %}

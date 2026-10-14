@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load market_extras %}
+{% block title %}{{ listing.title }} — CampusMarket{% endblock %}
+{% block content %}
+<div class="container section">
+  <nav class="crumbs" aria-label="Навигация">
+    <a class="crumb" href="{% url 'catalog' %}"><svg class="i"><use href="#i-grid"/></svg>Каталог</a>
+    <span class="sep" aria-hidden="true">›</span>
+    <a class="crumb crumb-cat" href="{% url 'catalog' %}?category={{ listing.category_id }}"><svg class="i"><use href="#i-{% if listing.category.slug == 'books' %}book{% elif listing.category.slug == 'tech' %}laptop{% elif listing.category.slug == 'clothes' %}shirt{% else %}grid{% endif %}"/></svg>{{ listing.category.name }}</a>
+  </nav>
+
+  {% if listing.status == 'hidden' %}<div class="alert alert-error">Объявление скрыто модератором. Причина: {{ listing.hide_reason }}</div>{% endif %}
+  {% if listing.status == 'completed' %}<div class="alert alert-info">Вещь уже передана новому владельцу.</div>{% endif %}
+  {% if listing.status == 'archived' %}<div class="alert alert-info">Объявление снято с публикации.</div>{% endif %}
+
+  <div class="detail">
+    <div class="gallery">
+      <div class="gallery-main">
+        {% if images %}<img id="gallery-main" src="{{ images.0.image.url }}" alt="{{ listing.title }}">{% else %}<div class="ph"><svg class="i i-xl"><use href="#i-image"/></svg><span>Нет фото</span></div>{% endif %}
+      </div>
+      {% if images|length > 1 %}
+      <div class="thumbs">
+        {% for img in images %}<button type="button" class="thumb {% if forloop.first %}on{% endif %}" data-src="{{ img.image.url }}" aria-label="Фото {{ forloop.counter }}"><img src="{{ img.image.url }}" alt=""></button>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="detail-info">
+      <h1>{{ listing.title }}</h1>
+      <p class="detail-price">{{ listing.price_display }}</p>
+      <p>
+        <span class="badge {{ listing.mode|mode_badge }}">{{ listing.get_mode_display }}</span>
+        <span class="badge badge-green">{{ listing.category.name }}</span>
+        {% if listing.status == 'reserved' %}<span class="badge badge-red">Зарезервировано</span>{% endif %}
+      </p>
+      <p class="muted">Состояние: <strong>{{ listing.get_condition_display }}</strong></p>
+      <p class="muted">Автор: <strong>{{ listing.seller.display_name }}</strong> · {{ listing.created_at|date:"d.m.Y H:i" }}</p>
+
+      <div class="detail-actions">
+        {% if is_owner %}
+          {% if listing.is_editable %}<a class="btn btn-primary" href="{% url 'listing_edit' listing.pk %}">Редактировать</a>{% endif %}
+          <a class="btn btn-outline" href="{% url 'my_listings' %}">Мои объявления</a>
+        {% elif can_request %}
+          <details class="request-box">
+            <summary class="btn btn-primary">Отправить заявку</summary>
+            <form method="post" action="{% url 'request_create' listing.pk %}" data-loading>
+              {% csrf_token %}
+              {% include "_field.html" with field=request_form.text %}
+              <button class="btn btn-primary" type="submit">Отправить</button>
+            </form>
+          </details>
+        {% elif my_request %}
+          <a class="btn btn-primary" href="{% url 'request_detail' my_request.pk %}">Моя заявка: {{ my_request.get_status_display }}</a>
+        {% elif listing.status == 'reserved' %}
+          <button class="btn btn-primary" disabled>Вещь зарезервирована</button>
+        {% elif not user.is_authenticated %}
+          <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path|urlencode }}">Войдите, чтобы отправить заявку</a>
+        {% endif %}
+        {% if user.is_authenticated and listing.status == 'published' or listing.status == 'reserved' %}
+          {% if user.is_authenticated %}
+          <form method="post" action="{% url 'favorite_toggle' listing.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+            <button class="btn btn-outline" type="submit"><svg class="i"><use href="#i-heart"/></svg>{% if is_fav %}В избранном{% else %}В избранное{% endif %}</button>
+          </form>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% if user.is_authenticated and not is_owner and listing.status == 'published' or user.is_authenticated and not is_owner and listing.status == 'reserved' %}
+        <a class="link-danger" href="{% url 'report_create' listing.pk %}"><svg class="i"><use href="#i-flag"/></svg> Пожаловаться на объявление</a>
+      {% endif %}
+      {% if user.is_moderator and listing.status == 'hidden' %}
+        <form method="post" action="{% url 'listing_unhide' listing.pk %}" data-confirm="Вернуть объявление в каталог?">{% csrf_token %}<button class="btn btn-outline" type="submit">Вернуть в каталог</button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="detail-lower">
+    <div class="panel">
+      <h2>Описание</h2>
+      <p class="prewrap">{{ listing.description }}</p>
+    </div>
+    <div class="panel seller-card">
+      <h2>Автор объявления</h2>
+      <div class="seller"><span class="avatar avatar-lg">{{ listing.seller.display_name|slice:":1"|upper }}</span>
+        <div><strong>{{ listing.seller.display_name }}</strong><span class="muted">Студент</span></div></div>
+      <p class="muted">Активных объявлений: <strong>{{ seller_count }}</strong></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

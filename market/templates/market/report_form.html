@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Жалоба — CampusMarket{% endblock %}
+{% block content %}
+<div class="container narrow section">
+  <h1>Пожаловаться на объявление</h1>
+  <p class="muted">«{{ listing.title }}»</p>
+  <form method="post" class="panel form" data-loading>
+    {% csrf_token %}
+    {% include "_field.html" with field=form.reason %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Отправить жалобу</button>
+      <a class="btn btn-outline" href="{{ listing.get_absolute_url }}">Отмена</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

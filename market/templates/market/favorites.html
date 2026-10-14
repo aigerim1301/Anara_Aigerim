@@ -1,0 +1,11 @@
+{% extends "cabinet_base.html" %}
+{% block title %}Избранное — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="page-head"><h1>Избранное</h1></div>
+{% if page.object_list %}
+<div class="grid grid-3">{% for l in page.object_list %}{% include "_card.html" %}{% endfor %}</div>
+{% include "_pagination.html" %}
+{% else %}
+<div class="empty"><p>В избранном пока ничего нет. Нажмите на сердечко у объявления, чтобы сохранить его.</p><a class="btn btn-primary" href="{% url 'catalog' %}">В каталог</a></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "cabinet_base.html" %}
+{% load market_extras %}
+{% block title %}Модерация — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="page-head"><h1>Жалобы</h1></div>
+<div class="tabs">
+  <a class="{% if tab == 'new' %}active{% endif %}" href="?tab=new">Новые ({{ counts.new }})</a>
+  <a class="{% if tab == 'in_progress' %}active{% endif %}" href="?tab=in_progress">В работе ({{ counts.in_progress }})</a>
+  <a class="{% if tab == 'resolved' %}active{% endif %}" href="?tab=resolved">Решённые ({{ counts.resolved }})</a>
+</div>
+{% if page.object_list %}
+<ul class="rows">
+  {% for r in page.object_list %}
+  <li class="row-item mod-item">
+    <a class="thumb-sm" href="{{ r.listing.get_absolute_url }}">{% with c=r.listing.cover %}{% if c %}<img src="{{ c.image.url }}" alt="">{% else %}<svg class="i"><use href="#i-image"/></svg>{% endif %}{% endwith %}</a>
+    <div class="row-main">
+      <a class="row-title" href="{{ r.listing.get_absolute_url }}">{{ r.listing.title }}</a>
+      <span class="muted">Причина: {{ r.reason }}</span>
+      <span class="muted">От: {{ r.reporter.display_name }} · {{ r.created_at|date:"d.m.Y H:i" }}</span>
+      {% if r.resolution %}<span class="muted">Решение: {{ r.resolution }}{% if r.resolved_by %} ({{ r.resolved_by.display_name }}){% endif %}</span>{% endif %}
+    </div>
+    {% if r.status != 'resolved' %}
+    <form class="mod-form" method="post" action="{% url 'moderation_action' r.pk %}">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <input type="text" name="reason" placeholder="Причина / комментарий" maxlength="300" aria-label="Причина">
+      <div class="row-actions">
+        {% if r.status == 'new' %}<button class="btn btn-outline btn-sm" name="action" value="take">В работу</button>{% endif %}
+        <button class="btn btn-danger btn-sm" name="action" value="hide" data-confirm="Скрыть объявление из каталога?">Скрыть</button>
+        <button class="btn btn-outline btn-sm" name="action" value="dismiss">Оставить</button>
+      </div>
+    </form>
+    {% else %}<span class="badge badge-green">Решена</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% include "_pagination.html" %}
+{% else %}
+<div class="empty"><p>В этом разделе жалоб нет.</p></div>
+{% endif %}
+{% endblock %}

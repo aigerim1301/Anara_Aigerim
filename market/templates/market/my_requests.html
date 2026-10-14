@@ -1,0 +1,45 @@
+{% extends "cabinet_base.html" %}
+{% load market_extras %}
+{% block title %}Мои заявки — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="page-head"><h1>Мои заявки</h1></div>
+<div class="tabs">
+  <a class="{% if tab == 'incoming' %}active{% endif %}" href="?tab=incoming">Входящие ({{ counts.incoming }})</a>
+  <a class="{% if tab == 'outgoing' %}active{% endif %}" href="?tab=outgoing">Исходящие ({{ counts.outgoing }})</a>
+  <a class="{% if tab == 'archive' %}active{% endif %}" href="?tab=archive">Архив ({{ counts.archive }})</a>
+</div>
+{% if page.object_list %}
+<ul class="rows">
+  {% for d in page.object_list %}
+  <li class="row-item">
+    <a class="thumb-sm" href="{% url 'request_detail' d.pk %}">{% with c=d.listing.cover %}{% if c %}<img src="{{ c.image.url }}" alt="">{% else %}<svg class="i"><use href="#i-image"/></svg>{% endif %}{% endwith %}</a>
+    <div class="row-main">
+      <a class="row-title" href="{% url 'request_detail' d.pk %}">{{ d.listing.title }}</a>
+      <span class="muted">
+        {% if d.listing.seller_id == user.id %}Заявитель: {{ d.buyer.display_name }}{% else %}Продавец: {{ d.listing.seller.display_name }}{% endif %}
+        · {{ d.created_at|date:"d.m.Y H:i" }}
+      </span>
+      <span class="muted clamp">{{ d.text }}</span>
+    </div>
+    <span class="badge {{ d.status|badge }}">{{ d.get_status_display }}</span>
+    <div class="row-actions">
+      <a class="btn btn-outline btn-sm" href="{% url 'request_detail' d.pk %}">Переписка</a>
+      {% if d.listing.seller_id == user.id and d.status == 'pending' %}
+        {% if d.listing.status == 'published' %}
+        <form method="post" action="{% url 'request_accept' d.pk %}" data-confirm="Выбрать этого получателя и зарезервировать вещь?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-primary btn-sm">Выбрать</button></form>
+        {% endif %}
+        <form method="post" action="{% url 'request_reject' d.pk %}" data-confirm="Отклонить заявку?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-outline btn-sm">Отклонить</button></form>
+      {% endif %}
+      {% if d.buyer_id == user.id and d.status == 'pending' or d.buyer_id == user.id and d.status == 'accepted' %}
+        <form method="post" action="{% url 'request_cancel' d.pk %}" data-confirm="Отменить заявку?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-outline btn-sm">Отменить</button></form>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% include "_pagination.html" %}
+{% else %}
+<div class="empty"><p>{% if tab == 'incoming' %}Входящих заявок нет.{% elif tab == 'outgoing' %}Вы ещё не отправляли заявок. Найдите что-нибудь в каталоге.{% else %}Архив пуст.{% endif %}</p>
+  <a class="btn btn-outline" href="{% url 'catalog' %}">В каталог</a></div>
+{% endif %}
+{% endblock %}

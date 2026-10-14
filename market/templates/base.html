@@ -1,0 +1,65 @@
+{% load static tz %}{% get_current_timezone as TIME_ZONE %}<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CampusMarket — студенческая барахолка{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+{% include "_sprite.html" %}
+{% with u=request.resolver_match.url_name %}
+<header class="topbar">
+  <div class="container topbar-in">
+    <a class="logo" href="{% url 'home' %}"><svg class="i i-lg"><use href="#i-cap"/></svg><span>CampusMarket</span></a>
+    <nav class="mainnav" aria-label="Основная навигация">
+      <a href="{% url 'catalog' %}" class="{% if u == 'catalog' %}active{% endif %}">Каталог</a>
+      <a href="{% url 'how_it_works' %}" class="{% if u == 'how_it_works' %}active{% endif %}">Как это работает</a>
+    </nav>
+    <form class="search" action="{% url 'catalog' %}" method="get" role="search">
+      <svg class="i"><use href="#i-search"/></svg>
+      <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Поиск объявлений…" aria-label="Поиск">
+    </form>
+    <div class="topbar-actions">
+      {% if user.is_authenticated %}
+        <a class="icon-btn" href="{% url 'favorites' %}" aria-label="Избранное"><svg class="i"><use href="#i-heart"/></svg></a>
+        <a class="icon-btn" href="{% url 'my_messages' %}" aria-label="Сообщения"><svg class="i"><use href="#i-message"/></svg></a>
+        <a class="btn btn-primary btn-sm hide-sm" href="{% url 'listing_create' %}">Подать объявление</a>
+        <a class="avatar" href="{% url 'profile' %}" aria-label="Профиль">{{ user.display_name|slice:":1"|upper }}</a>
+      {% else %}
+        <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">Войти</a>
+        <a class="btn btn-primary btn-sm" href="{% url 'register' %}">Регистрация</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+{% if messages %}
+<div class="toasts" aria-live="polite">
+  {% for m in messages %}<div class="toast toast-{{ m.level_tag }}" role="status">{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer class="footer">
+  <div class="container footer-in">
+    <span>© CampusMarket — учебный проект. Демо-данные вымышленные.</span>
+    <span>Время показано в поясе {{ TIME_ZONE }} (UTC{% now "O" %})</span>
+  </div>
+</footer>
+
+<nav class="bottomnav" aria-label="Мобильная навигация">
+  <a href="{% url 'home' %}" class="{% if u == 'home' %}active{% endif %}"><svg class="i"><use href="#i-home"/></svg><span>Главная</span></a>
+  <a href="{% url 'catalog' %}" class="{% if u == 'catalog' %}active{% endif %}"><svg class="i"><use href="#i-search"/></svg><span>Каталог</span></a>
+  <a href="{% url 'favorites' %}" class="{% if u == 'favorites' %}active{% endif %}"><svg class="i"><use href="#i-heart"/></svg><span>Избранное</span></a>
+  <a href="{% url 'my_messages' %}" class="{% if u == 'my_messages' %}active{% endif %}"><svg class="i"><use href="#i-message"/></svg><span>Сообщения</span></a>
+  <a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'login' %}{% endif %}" class="{% if u == 'profile' %}active{% endif %}"><svg class="i"><use href="#i-user"/></svg><span>Профиль</span></a>
+</nav>
+{% endwith %}
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

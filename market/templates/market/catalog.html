@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Каталог — CampusMarket{% endblock %}
+{% block content %}
+<div class="container catalog">
+  <button class="btn btn-outline filter-toggle" type="button" data-toggle="#filters"><svg class="i"><use href="#i-filter"/></svg>Фильтры</button>
+  <aside class="filters" id="filters">
+    <form method="get" action="{% url 'catalog' %}">
+      <h2>Фильтры</h2>
+      {% if g.q %}<input type="hidden" name="q" value="{{ g.q }}">{% endif %}
+      <div class="field">
+        <label for="f-cat">Категория</label>
+        <select id="f-cat" name="category">
+          <option value="">Все категории</option>
+          {% for c in categories %}<option value="{{ c.pk }}" {% if g.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <fieldset class="field"><legend>Режим</legend>
+        <label class="radio"><input type="radio" name="mode" value="" {% if not g.mode %}checked{% endif %}> Все</label>
+        {% for v, label in modes %}<label class="radio"><input type="radio" name="mode" value="{{ v }}" {% if g.mode == v %}checked{% endif %}> {{ label }}</label>{% endfor %}
+      </fieldset>
+      <fieldset class="field"><legend>Состояние</legend>
+        <label class="radio"><input type="radio" name="condition" value="" {% if not g.condition %}checked{% endif %}> Любое</label>
+        {% for v, label in conditions %}<label class="radio"><input type="radio" name="condition" value="{{ v }}" {% if g.condition == v %}checked{% endif %}> {{ label }}</label>{% endfor %}
+      </fieldset>
+      <fieldset class="field"><legend>Цена, сом</legend>
+        <div class="range"><input type="number" name="price_min" min="0" step="1" placeholder="От" value="{{ g.price_min }}" aria-label="Цена от"><input type="number" name="price_max" min="0" step="1" placeholder="До" value="{{ g.price_max }}" aria-label="Цена до"></div>
+        {% for e in form.price_min.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        {% for e in form.price_max.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </fieldset>
+      {% if g.sort %}<input type="hidden" name="sort" value="{{ g.sort }}">{% endif %}
+      <button class="btn btn-primary btn-block" type="submit">Применить</button>
+      <a class="reset" href="{% url 'catalog' %}">Сбросить всё</a>
+    </form>
+  </aside>
+
+  <section class="catalog-main">
+    <div class="catalog-bar">
+      <p class="muted">Найдено: {{ total }}</p>
+      <form method="get" class="sort-form">
+        {% if g.q %}<input type="hidden" name="q" value="{{ g.q }}">{% endif %}
+        {% if g.category %}<input type="hidden" name="category" value="{{ g.category }}">{% endif %}
+        {% if g.mode %}<input type="hidden" name="mode" value="{{ g.mode }}">{% endif %}
+        {% if g.condition %}<input type="hidden" name="condition" value="{{ g.condition }}">{% endif %}
+        {% if g.price_min %}<input type="hidden" name="price_min" value="{{ g.price_min }}">{% endif %}
+        {% if g.price_max %}<input type="hidden" name="price_max" value="{{ g.price_max }}">{% endif %}
+        <label for="sort" class="muted">Сортировка:</label>
+        <select id="sort" name="sort" data-autosubmit>
+          {% for v, label in sorts %}<option value="{{ v }}" {% if sort == v %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <noscript><button class="btn btn-outline btn-sm" type="submit">OK</button></noscript>
+      </form>
+    </div>
+    {% if page.object_list %}
+      <div class="grid grid-3">{% for l in page.object_list %}{% include "_card.html" %}{% endfor %}</div>
+      {% include "_pagination.html" %}
+    {% else %}
+      <div class="empty"><p>Ничего не найдено. Попробуйте изменить фильтры или поисковый запрос.</p><a class="btn btn-outline" href="{% url 'catalog' %}">Сбросить фильтры</a></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

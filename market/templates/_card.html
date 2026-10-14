@@ -1,0 +1,25 @@
+{% load market_extras %}
+<article class="card">
+  <a class="card-link" href="{{ l.get_absolute_url }}">
+    <div class="card-img">
+      {% with cover=l.cover %}
+        {% if cover %}<img src="{{ cover.image.url }}" alt="{{ l.title }}" loading="lazy">{% else %}<div class="ph"><svg class="i i-xl"><use href="#i-image"/></svg></div>{% endif %}
+      {% endwith %}
+      <span class="badge badge-solid {{ l.mode|mode_badge }}">{{ l.get_mode_display }}</span>
+      {% if l.status == 'reserved' %}<span class="badge badge-solid badge-red card-status">Резерв</span>{% endif %}
+    </div>
+    <div class="card-body">
+      <h3 class="card-title">{{ l.title }}</h3>
+      <p class="card-price">{{ l.price_display }}</p>
+      <p class="card-meta"><span>{{ l.category.name }}</span><span>{{ l.created_at|date:"d.m.Y" }}</span></p>
+    </div>
+  </a>
+  {% if user.is_authenticated %}
+  <form class="fav-form" method="post" action="{% url 'favorite_toggle' l.pk %}">
+    {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button class="fav {% if l.pk in fav_ids %}on{% endif %}" type="submit" aria-label="{% if l.pk in fav_ids %}Убрать из избранного{% else %}В избранное{% endif %}"><svg class="i"><use href="#i-heart"/></svg></button>
+  </form>
+  {% else %}
+  <a class="fav-form fav" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Войдите, чтобы добавить в избранное"><svg class="i"><use href="#i-heart"/></svg></a>
+  {% endif %}
+</article>

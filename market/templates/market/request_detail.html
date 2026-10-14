@@ -1,0 +1,49 @@
+{% extends "cabinet_base.html" %}
+{% load market_extras %}
+{% block title %}Переписка — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="chat-head">
+  <a class="thumb-sm" href="{{ deal.listing.get_absolute_url }}">{% if cover %}<img src="{{ cover.image.url }}" alt="">{% else %}<svg class="i"><use href="#i-image"/></svg>{% endif %}</a>
+  <div class="row-main">
+    <a class="row-title" href="{{ deal.listing.get_absolute_url }}">{{ deal.listing.title }}</a>
+    <span class="muted">{{ other.display_name }} · {{ deal.listing.price_display }}</span>
+  </div>
+  <span class="badge {{ deal.status|badge }}">{{ deal.get_status_display }}</span>
+</div>
+
+<div class="chat-actions">
+  {% if is_seller and deal.status == 'pending' %}
+    {% if deal.listing.status == 'published' %}
+    <form method="post" action="{% url 'request_accept' deal.pk %}" data-confirm="Выбрать этого получателя и зарезервировать вещь?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-primary btn-sm">Выбрать получателем</button></form>
+    {% endif %}
+    <form method="post" action="{% url 'request_reject' deal.pk %}" data-confirm="Отклонить заявку?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-outline btn-sm">Отклонить</button></form>
+  {% endif %}
+  {% if not is_seller and deal.status == 'pending' or not is_seller and deal.status == 'accepted' %}
+    <form method="post" action="{% url 'request_cancel' deal.pk %}" data-confirm="Отменить заявку?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-outline btn-sm">Отменить заявку</button></form>
+  {% endif %}
+  {% if is_seller and deal.listing.status == 'reserved' and deal.status == 'accepted' %}
+    <form method="post" action="{% url 'listing_complete' deal.listing_id %}" data-confirm="Отметить вещь как переданную?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-primary btn-sm">Отметить «передано»</button></form>
+  {% endif %}
+</div>
+
+<div class="chat" id="chat">
+  {% for m in chat %}
+  <div class="bubble {% if m.sender_id == user.id %}me{% else %}them{% endif %}">
+    <p class="prewrap">{{ m.text }}</p>
+    <time datetime="{{ m.created_at|date:'c' }}">{{ m.created_at|date:"d.m H:i" }}</time>
+  </div>
+  {% empty %}
+  <p class="muted center">Сообщений пока нет.</p>
+  {% endfor %}
+</div>
+
+{% if can_write %}
+<form class="chat-form" method="post" data-loading>
+  {% csrf_token %}
+  <textarea name="text" rows="1" maxlength="1000" placeholder="Написать сообщение…" aria-label="Сообщение" required></textarea>
+  <button class="btn btn-primary" type="submit" aria-label="Отправить"><svg class="i"><use href="#i-send"/></svg></button>
+</form>
+{% else %}
+<p class="muted center">Заявка закрыта — писать сообщения больше нельзя.</p>
+{% endif %}
+{% endblock %}

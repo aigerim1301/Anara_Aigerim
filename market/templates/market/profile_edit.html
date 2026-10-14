@@ -1,0 +1,10 @@
+{% extends "cabinet_base.html" %}
+{% block title %}Редактирование профиля — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="page-head"><h1>Редактирование профиля</h1></div>
+<form method="post" class="panel form" data-loading>
+  {% csrf_token %}
+  {% for field in form %}{% include "_field.html" %}{% endfor %}
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Сохранить</button><a class="btn btn-outline" href="{% url 'profile' %}">Отмена</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,4 @@
+Django>=5.1,<5.3
+Pillow>=10.1
+tzdata
+# Для PostgreSQL (по желанию): psycopg[binary]>=3.1

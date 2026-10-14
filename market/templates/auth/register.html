@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — CampusMarket{% endblock %}
+{% block content %}
+<div class="container auth section">
+  <form method="post" class="panel form" data-loading novalidate>
+    <h1>Регистрация</h1>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn btn-primary btn-block" type="submit">Создать аккаунт</button>
+    <p class="muted center">Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></p>
+  </form>
+</div>
+{% endblock %}

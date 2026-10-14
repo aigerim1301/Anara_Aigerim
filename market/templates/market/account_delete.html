@@ -1,0 +1,13 @@
+{% extends "cabinet_base.html" %}
+{% block title %}Удаление аккаунта — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="panel">
+  <h1>Удалить аккаунт?</h1>
+  <p>Вы больше не сможете войти. Ваши опубликованные объявления будут сняты с публикации, а история сделок останется у других участников.</p>
+  <form method="post" class="form-actions">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Да, удалить аккаунт</button>
+    <a class="btn btn-outline" href="{% url 'profile' %}">Отмена</a>
+  </form>
+</div>
+{% endblock %}

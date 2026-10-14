@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+{% with u=request.resolver_match.url_name %}
+<div class="container cabinet">
+  <aside class="side">
+    <nav aria-label="Личный кабинет">
+      <a class="side-link {% if u == 'profile' or u == 'profile_edit' or u == 'account_delete' %}active{% endif %}" href="{% url 'profile' %}"><svg class="i"><use href="#i-user"/></svg>Мой профиль</a>
+      <a class="side-link {% if u == 'my_listings' %}active{% endif %}" href="{% url 'my_listings' %}"><svg class="i"><use href="#i-list"/></svg>Мои объявления</a>
+      <a class="side-link {% if u == 'my_requests' %}active{% endif %}" href="{% url 'my_requests' %}"><svg class="i"><use href="#i-inbox"/></svg>Мои заявки</a>
+      <a class="side-link {% if u == 'favorites' %}active{% endif %}" href="{% url 'favorites' %}"><svg class="i"><use href="#i-heart"/></svg>Избранное</a>
+      <a class="side-link {% if u == 'my_messages' or u == 'request_detail' %}active{% endif %}" href="{% url 'my_messages' %}"><svg class="i"><use href="#i-message"/></svg>Сообщения</a>
+      <a class="side-link {% if u == 'my_reports' %}active{% endif %}" href="{% url 'my_reports' %}"><svg class="i"><use href="#i-flag"/></svg>Мои жалобы</a>
+      {% if user.is_moderator %}<a class="side-link {% if u == 'moderation_reports' %}active{% endif %}" href="{% url 'moderation_reports' %}"><svg class="i"><use href="#i-shield"/></svg>Модерация</a>{% endif %}
+    </nav>
+    <form method="post" action="{% url 'logout' %}" class="side-logout">{% csrf_token %}
+      <button type="submit" class="side-link"><svg class="i"><use href="#i-logout"/></svg>Выйти</button>
+    </form>
+  </aside>
+  <section class="cabinet-main">{% block cabinet %}{% endblock %}</section>
+</div>
+{% endwith %}
+{% endblock %}

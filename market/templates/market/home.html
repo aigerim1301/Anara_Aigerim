@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="container hero-in">
+    <div class="hero-text">
+      <h1>CampusMarket</h1>
+      <p class="hero-sub">Студенческая барахолка</p>
+      <p class="hero-lead">Покупай, обменивайся, дари — всё, что нужно студенту, в одном месте!</p>
+            <ul class="cat-chips">
+        {% for c in categories %}
+        <li>
+          <a class="cat-chip" href="{% url 'catalog' %}?category={{ c.pk }}">
+            <span class="cat-ico"><svg class="i"><use href="#i-{% if c.slug == 'books' %}book{% elif c.slug == 'tech' %}laptop{% elif c.slug == 'clothes' %}shirt{% else %}grid{% endif %}"/></svg></span>
+            <span class="cat-name">{{ c.name }}</span>
+            <span class="cat-count">{{ c.total }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="{% url 'catalog' %}">Перейти в каталог</a>
+        <a class="btn btn-outline btn-lg" href="{% url 'how_it_works' %}">Как это работает</a>
+      </div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 420 340" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="215" cy="305" rx="170" ry="22" fill="#DBEAFE"/>
+        <rect x="40" y="215" width="230" height="22" rx="4" fill="#1F2937"/>
+        <rect x="52" y="190" width="215" height="25" rx="4" fill="#2563EB"/>
+        <rect x="30" y="165" width="225" height="25" rx="4" fill="#F59E0B"/>
+        <rect x="60" y="140" width="190" height="25" rx="4" fill="#10B981"/>
+        <rect x="110" y="62" width="150" height="92" rx="8" fill="#E5E7EB"/>
+        <rect x="118" y="70" width="134" height="76" rx="4" fill="#1F2937"/>
+        <rect x="95" y="154" width="180" height="9" rx="4" fill="#9CA3AF"/>
+        <path d="M290 95c0-35 22-55 58-55s58 20 58 55v190c0 12-10 22-22 22h-72c-12 0-22-10-22-22Z" fill="#1F2937"/>
+        <rect x="306" y="170" width="84" height="64" rx="12" fill="#374151"/>
+        <rect x="318" y="190" width="60" height="8" rx="4" fill="#2563EB"/>
+        <path d="M312 95c0-18 14-28 36-28s36 10 36 28" stroke="#374151" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <circle cx="48" cy="270" r="26" fill="#fff" stroke="#E5E7EB" stroke-width="4"/>
+        <path d="M30 262h36v14a18 18 0 0 1-36 0Z" fill="#2563EB"/>
+      </svg>
+    </div>
+  </div>
+  <div class="container">
+    <div class="benefits">
+      <div><svg class="i i-lg"><use href="#i-shield"/></svg><div><strong>Безопасные сделки</strong><span>Модерация и защита пользователей</span></div></div>
+      <div><svg class="i i-lg"><use href="#i-search"/></svg><div><strong>Удобный поиск</strong><span>Фильтры и сортировка</span></div></div>
+      <div><svg class="i i-lg"><use href="#i-message"/></svg><div><strong>Прямое общение</strong><span>Чат внутри заявки</span></div></div>
+      <div><svg class="i i-lg"><use href="#i-gift"/></svg><div><strong>Бесплатно</strong><span>Дари, обменивай, продавай</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="container section">
+  <div class="section-head"><h2>Свежие объявления</h2><a href="{% url 'catalog' %}">Смотреть все</a></div>
+  {% if latest %}
+    <div class="grid">{% for l in latest %}{% include "_card.html" %}{% endfor %}</div>
+  {% else %}
+    <div class="empty"><p>Пока нет объявлений. Станьте первым!</p><a class="btn btn-primary" href="{% url 'listing_create' %}">Подать объявление</a></div>
+  {% endif %}
+</section>
+{% endblock %}

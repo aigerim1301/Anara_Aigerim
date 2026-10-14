@@ -1,0 +1,42 @@
+{% extends "cabinet_base.html" %}
+{% load market_extras %}
+{% block title %}Мои объявления — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="page-head"><h1>Мои объявления</h1><a class="btn btn-primary" href="{% url 'listing_create' %}">Создать объявление</a></div>
+<div class="tabs">
+  <a class="{% if tab == 'all' %}active{% endif %}" href="?tab=all">Все ({{ counts.all }})</a>
+  <a class="{% if tab == 'published' %}active{% endif %}" href="?tab=published">Активные ({{ counts.published }})</a>
+  <a class="{% if tab == 'reserved' %}active{% endif %}" href="?tab=reserved">Резерв ({{ counts.reserved }})</a>
+  <a class="{% if tab == 'archive' %}active{% endif %}" href="?tab=archive">Архив ({{ counts.archive }})</a>
+</div>
+{% if page.object_list %}
+<ul class="rows">
+  {% for l in page.object_list %}
+  <li class="row-item">
+    <a class="thumb-sm" href="{{ l.get_absolute_url }}">{% with c=l.cover %}{% if c %}<img src="{{ c.image.url }}" alt="">{% else %}<svg class="i"><use href="#i-image"/></svg>{% endif %}{% endwith %}</a>
+    <div class="row-main">
+      <a class="row-title" href="{{ l.get_absolute_url }}">{{ l.title }}</a>
+      <span class="muted">{{ l.price_display }} · {{ l.category.name }}</span>
+      {% if l.status == 'hidden' %}<span class="error">Скрыто модератором: {{ l.hide_reason }}</span>{% endif %}
+    </div>
+    <span class="badge {{ l.status|badge }}">{{ l.get_status_display }}</span>
+    {% if l.pending %}<a class="badge badge-orange" href="{% url 'my_requests' %}?tab=incoming&listing={{ l.pk }}">Заявок: {{ l.pending }}</a>{% endif %}
+    <div class="row-actions">
+      {% if l.is_editable %}<a class="btn btn-outline btn-sm" href="{% url 'listing_edit' l.pk %}">Изменить</a>{% endif %}
+      {% if l.status == 'published' %}
+        <form method="post" action="{% url 'listing_archive' l.pk %}" data-confirm="Снять объявление с публикации?">{% csrf_token %}<button class="btn btn-outline btn-sm">Снять</button></form>
+      {% elif l.status == 'archived' %}
+        <form method="post" action="{% url 'listing_restore' l.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm">Опубликовать</button></form>
+      {% elif l.status == 'reserved' %}
+        <form method="post" action="{% url 'listing_complete' l.pk %}" data-confirm="Отметить вещь как переданную? Остальные заявки будут отклонены.">{% csrf_token %}<button class="btn btn-primary btn-sm">Передано</button></form>
+        <form method="post" action="{% url 'listing_release' l.pk %}" data-confirm="Снять резерв? Вещь вернётся в каталог.">{% csrf_token %}<button class="btn btn-outline btn-sm">Снять резерв</button></form>
+      {% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% include "_pagination.html" %}
+{% else %}
+<div class="empty"><p>Здесь пока пусто. Опубликуйте первое объявление!</p><a class="btn btn-primary" href="{% url 'listing_create' %}">Создать объявление</a></div>
+{% endif %}
+{% endblock %}

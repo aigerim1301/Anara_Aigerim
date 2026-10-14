@@ -1,0 +1,23 @@
+{% extends "cabinet_base.html" %}
+{% load market_extras %}
+{% block title %}Мои жалобы — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="page-head"><h1>Мои жалобы</h1></div>
+{% if page.object_list %}
+<ul class="rows">
+  {% for r in page.object_list %}
+  <li class="row-item">
+    <div class="row-main">
+      <a class="row-title" href="{{ r.listing.get_absolute_url }}">{{ r.listing.title }}</a>
+      <span class="muted clamp">{{ r.reason }}</span>
+      {% if r.resolution %}<span class="muted">Решение: {{ r.resolution }}</span>{% endif %}
+    </div>
+    <span class="badge {{ r.status|badge }}">{{ r.get_status_display }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% include "_pagination.html" %}
+{% else %}
+<div class="empty"><p>Вы ещё не отправляли жалоб.</p></div>
+{% endif %}
+{% endblock %}

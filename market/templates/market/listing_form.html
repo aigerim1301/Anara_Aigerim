@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{% if listing %}Редактирование{% else %}Новое объявление{% endif %} — CampusMarket{% endblock %}
+{% block content %}
+<div class="container narrow section">
+  <h1>{% if listing %}Редактирование объявления{% else %}Новое объявление{% endif %}</h1>
+  {% if listing and listing.status == 'reserved' %}<div class="alert alert-info">Вещь в резерве: цену и режим менять нельзя.</div>{% endif %}
+  <form method="post" enctype="multipart/form-data" class="panel form" data-loading novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+    {% include "_field.html" with field=form.title %}
+    <div class="row">
+      {% include "_field.html" with field=form.category %}
+      {% include "_field.html" with field=form.condition %}
+    </div>
+    <div class="row">
+      {% include "_field.html" with field=form.mode %}
+      {% include "_field.html" with field=form.price %}
+    </div>
+    {% include "_field.html" with field=form.description %}
+
+    <div class="field{% if form.images.errors %} has-error{% endif %}">
+      <label for="id_images">Фотографии (до 5 шт., JPG, PNG или WebP, до 5 МБ каждая)</label>
+      <input type="file" id="id_images" name="images" multiple accept="image/jpeg,image/png,image/webp"
+             data-upload-modal data-existing="{{ images|length }}" data-max="5">
+      <p class="hint" id="upload-summary">Файлы не выбраны. Все фото будут приведены к одному размеру 4:3.</p>
+      {% for e in form.images.errors %}<p class="error">{{ e }}</p>{% endfor %}
+    </div>
+    {% if images %}
+    <div class="field"><label>Текущие фотографии (отметьте, чтобы удалить)</label>
+      <div class="img-edit">
+        {% for img in images %}
+        <label class="img-edit-item"><img src="{{ img.image.url }}" alt=""><span><input type="checkbox" name="delete_images" value="{{ img.pk }}" {% if img.pk in delete_ids %}checked{% endif %}> Удалить</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{% if listing %}Сохранить{% else %}Опубликовать{% endif %}</button>
+      <a class="btn btn-outline" href="{% if listing %}{{ listing.get_absolute_url }}{% else %}{% url 'my_listings' %}{% endif %}">Отмена</a>
+    </div>
+  </form>
+</div>
+<dialog class="modal" id="upload-modal" aria-labelledby="upload-title">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="upload-title">Выбранные фотографии</h2>
+      <button type="button" class="modal-x" data-modal-cancel aria-label="Закрыть">×</button>
+    </div>
+    <p class="muted" id="upload-counter"></p>
+    <p class="error" id="upload-error" role="alert" hidden></p>
+    <div class="preview-grid" id="upload-grid"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline" data-modal-cancel>Отменить выбор</button>
+      <button type="button" class="btn btn-primary" id="upload-ok">Готово</button>
+    </div>
+  </div>
+</dialog>
+{% endblock %}

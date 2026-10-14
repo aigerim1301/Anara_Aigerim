@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Страница не найдена — CampusMarket{% endblock %}
+{% block content %}
+<div class="container error-page">
+  <div class="error-art" aria-hidden="true"><svg class="i i-xl"><use href="#i-image"/></svg></div>
+  <h1>Страница не найдена</h1>
+  <p class="muted">Возможно, вы перешли по неверной ссылке или страница была удалена.</p>
+  <a class="btn btn-primary" href="{% url 'home' %}">Вернуться на главную</a>
+</div>
+{% endblock %}

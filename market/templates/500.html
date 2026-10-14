@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Что-то пошло не так — CampusMarket{% endblock %}
+{% block content %}
+<div class="container error-page">
+  <div class="error-art" aria-hidden="true"><svg class="i i-xl"><use href="#i-image"/></svg></div>
+  <h1>Что-то пошло не так</h1>
+  <p class="muted">Произошла ошибка на сервере. Попробуйте ещё раз чуть позже.</p>
+  <a class="btn btn-primary" href="{% url 'home' %}">Вернуться на главную</a>
+</div>
+{% endblock %}
