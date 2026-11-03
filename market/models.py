@@ -1,8 +1,3 @@
-"""Модели CampusMarket.
-
-Правило по удалению: исторические записи (объявления, заявки, жалобы) защищены
-через PROTECT. Аккаунт пользователя не удаляется, а деактивируется.
-"""
 from decimal import Decimal
 
 from django.conf import settings
@@ -184,6 +179,7 @@ class DealRequest(models.Model):
     buyer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="requests_sent")
     text = models.TextField("Сообщение", max_length=1000)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    needs_answer = models.BooleanField("Нужен ответ продавца", default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -220,7 +216,11 @@ class DealRequest(models.Model):
 
 class Message(models.Model):
     request = models.ForeignKey(DealRequest, on_delete=models.CASCADE, related_name="messages")
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    # sender пустой, если сообщение написал бот
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    is_bot = models.BooleanField(default=False)
     text = models.TextField(max_length=1000)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -265,3 +265,21 @@ class Report(models.Model):
                 name="uniq_open_report_per_user",
             ),
         ]
+
+
+class BotMessage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bot_messages")
+    is_bot = models.BooleanField(default=False)
+    text = models.TextField(max_length=3000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        verbose_name = "Сообщение бота"
+        verbose_name_plural = "Сообщения бота"
+        indexes = [models.Index(fields=["user", "created_at"], name="bot_msg_user_created_idx")]
+
+    def __str__(self):
+        author = "CampusBot" if self.is_bot else self.user.username
+        return f"{author}: {self.text[:30]}"
+

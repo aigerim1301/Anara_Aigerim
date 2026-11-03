@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2.1">
 </head>
 <body>
 {% include "_sprite.html" %}
@@ -60,6 +60,22 @@
   <a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'login' %}{% endif %}" class="{% if u == 'profile' %}active{% endif %}"><svg class="i"><use href="#i-user"/></svg><span>Профиль</span></a>
 </nav>
 {% endwith %}
-<script src="{% static 'js/app.js' %}"></script>
+
+<!-- Модальное окно подтверждения (вместо window.confirm) -->
+<dialog id="confirm-modal" class="modal">
+  <div class="modal-box" style="max-width: 440px;">
+    <div class="modal-head">
+      <h2 style="font-size: 18px;" id="confirm-title">Подтверждение</h2>
+      <button type="button" class="modal-x" data-confirm-cancel aria-label="Закрыть">×</button>
+    </div>
+    <p id="confirm-message" style="margin: 12px 0 20px; font-size: 14px; line-height: 1.5; color: var(--text);"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-outline btn-sm" data-confirm-cancel>Отмена</button>
+      <button type="button" class="btn btn-primary btn-sm" id="confirm-ok">Подтвердить</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="{% static 'js/app.js' %}?v=2.1"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
-from .models import Category, DealRequest, Listing, Message, Report, User
+from .models import BotMessage, Category, DealRequest, Listing, Message, Report, User
 
 TEMP_MEDIA = tempfile.mkdtemp()
 L = Listing.Status
@@ -315,3 +315,32 @@ class AccountTests(BaseCase):
         self.assertFalse(self.seller.is_active)
         self.assertEqual(DealRequest.objects.count(), 1)
         self.assertEqual(self.seller.display_name, "Удалённый пользователь")
+
+    def test_bot_chat_and_responses(self):
+        self.client.force_login(self.buyer)
+        # GET creates initial welcome message
+        res = self.client.get(reverse("bot_chat"))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(BotMessage.objects.filter(user=self.buyer).count(), 1)
+        self.assertTrue(BotMessage.objects.filter(user=self.buyer, is_bot=True).exists())
+
+        # POST creates user message and bot reply
+        self.make_listing(title="Ноутбук для учёбы", price=15000)
+        res = self.client.post(reverse("bot_chat"), {"text": "найди ноутбук"})
+        self.assertRedirects(res, reverse("bot_chat"))
+        self.assertEqual(BotMessage.objects.filter(user=self.buyer).count(), 3)
+        last_bot = BotMessage.objects.filter(user=self.buyer, is_bot=True).last()
+        self.assertIn("Ноутбук для учёбы", last_bot.text)
+
+        # POST via AJAX
+        res_ajax = self.client.post(
+            reverse("bot_chat"), {"text": "бесплатно"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest"
+        )
+        self.assertEqual(res_ajax.status_code, 200)
+        self.assertEqual(res_ajax.json()["status"], "ok")
+
+        # Clear chat
+        res = self.client.post(reverse("bot_clear"))
+        self.assertRedirects(res, reverse("bot_chat"))
+        self.assertEqual(BotMessage.objects.filter(user=self.buyer).count(), 0)
+

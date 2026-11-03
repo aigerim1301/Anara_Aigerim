@@ -22,6 +22,19 @@ load_env(BASE_DIR / ".env")
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-me")
 DEBUG = os.environ.get("DEBUG", "1") == "1"
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if render_host and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
+if ".onrender.com" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(".onrender.com")
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+if render_host:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{render_host}")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -35,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -63,7 +77,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 AUTH_USER_MODEL = "market.User"
 
-if os.environ.get("DB_ENGINE", "sqlite") == "postgres":
+if os.environ.get("DATABASE_URL"):
+    try:
+        import dj_database_url
+        DATABASES = {"default": dj_database_url.config(conn_max_age=600, conn_health_checks=True)}
+    except ImportError:
+        DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+elif os.environ.get("DB_ENGINE", "sqlite") == "postgres":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -92,6 +112,16 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 

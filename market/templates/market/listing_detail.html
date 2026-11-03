@@ -65,7 +65,9 @@
         {% endif %}
       </div>
       {% if user.is_authenticated and not is_owner and listing.status == 'published' or user.is_authenticated and not is_owner and listing.status == 'reserved' %}
-        <a class="link-danger" href="{% url 'report_create' listing.pk %}"><svg class="i"><use href="#i-flag"/></svg> Пожаловаться на объявление</a>
+        <button type="button" class="link-danger" data-modal-open="#report-modal" style="background: none; border: 0; padding: 0; cursor: pointer; font: inherit; display: inline-flex; align-items: center; gap: 6px;">
+          <svg class="i"><use href="#i-flag"/></svg> Пожаловаться на объявление
+        </button>
       {% endif %}
       {% if user.is_moderator and listing.status == 'hidden' %}
         <form method="post" action="{% url 'listing_unhide' listing.pk %}" data-confirm="Вернуть объявление в каталог?">{% csrf_token %}<button class="btn btn-outline" type="submit">Вернуть в каталог</button></form>
@@ -86,4 +88,27 @@
     </div>
   </div>
 </div>
+
+{% if user.is_authenticated and not is_owner %}
+<!-- Модальное окно жалобы -->
+<dialog id="report-modal" class="modal">
+  <div class="modal-box" style="max-width: 520px;">
+    <div class="modal-head">
+      <h2 style="font-size: 18px;">Пожаловаться на объявление</h2>
+      <button type="button" class="modal-x" data-modal-close aria-label="Закрыть">×</button>
+    </div>
+    <form method="post" action="{% url 'report_create' listing.pk %}" class="form" data-loading>
+      {% csrf_token %}
+      <p class="muted" style="margin-bottom: 12px; font-size: 13px;">Опишите, что именно нарушает правила в объявлении «{{ listing.title }}». Модератор проверит обращение.</p>
+      <div class="field">
+        <textarea name="reason" rows="4" maxlength="500" placeholder="Причина жалобы (спам, запрещённый товар, неверная цена, оскорбления)… не менее 10 символов" required style="width: 100%;"></textarea>
+      </div>
+      <div class="modal-actions" style="margin-top: 14px;">
+        <button type="button" class="btn btn-outline btn-sm" data-modal-close>Отмена</button>
+        <button type="submit" class="btn btn-danger btn-sm">Отправить жалобу</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+{% endif %}
 {% endblock %}

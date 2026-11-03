@@ -123,6 +123,7 @@ erDiagram
 | POST | `/requests/<id>/accept/`, `reject/` | продавец | выбрать получателя / отклонить |
 | POST | `/requests/<id>/cancel/` | заявитель | отменить |
 | GET | `/my/listings/`, `/my/requests/`, `/my/messages/`, `/my/favorites/`, `/my/reports/` | вошедший | кабинет |
+| GET/POST | `/my/messages/bot/`, `/my/messages/bot/clear/` | вошедший | чат-бот CampusBot (консультант по каталогу) |
 | GET/POST | `/moderation/reports/`, `/moderation/reports/<id>/` | модератор | жалобы и решения |
 | GET/POST | `/accounts/register/`, `/accounts/login/`, `/accounts/logout/` | | вход и выход |
 | GET/POST | `/profile/`, `/profile/edit/`, `/profile/delete/` | вошедший | профиль |

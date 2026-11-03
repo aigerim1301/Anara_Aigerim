@@ -8,7 +8,7 @@
       <a class="side-link {% if u == 'my_listings' %}active{% endif %}" href="{% url 'my_listings' %}"><svg class="i"><use href="#i-list"/></svg>Мои объявления</a>
       <a class="side-link {% if u == 'my_requests' %}active{% endif %}" href="{% url 'my_requests' %}"><svg class="i"><use href="#i-inbox"/></svg>Мои заявки</a>
       <a class="side-link {% if u == 'favorites' %}active{% endif %}" href="{% url 'favorites' %}"><svg class="i"><use href="#i-heart"/></svg>Избранное</a>
-      <a class="side-link {% if u == 'my_messages' or u == 'request_detail' %}active{% endif %}" href="{% url 'my_messages' %}"><svg class="i"><use href="#i-message"/></svg>Сообщения</a>
+      <a class="side-link {% if u == 'my_messages' or u == 'request_detail' or u == 'bot_chat' %}active{% endif %}" href="{% url 'my_messages' %}"><svg class="i"><use href="#i-message"/></svg>Сообщения</a>
       <a class="side-link {% if u == 'my_reports' %}active{% endif %}" href="{% url 'my_reports' %}"><svg class="i"><use href="#i-flag"/></svg>Мои жалобы</a>
       {% if user.is_moderator %}<a class="side-link {% if u == 'moderation_reports' %}active{% endif %}" href="{% url 'moderation_reports' %}"><svg class="i"><use href="#i-shield"/></svg>Модерация</a>{% endif %}
     </nav>

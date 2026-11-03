@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Category, DealRequest, Favorite, Listing, ListingImage, Message, Report, User
+from .models import (BotMessage, Category, DealRequest, Favorite, Listing, ListingImage, Message,
+                    Report, User)
 
 
 @admin.register(User)
@@ -43,3 +44,15 @@ class ReportAdmin(admin.ModelAdmin):
 
 admin.site.register(Message)
 admin.site.register(Favorite)
+
+
+@admin.register(BotMessage)
+class BotMessageAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "is_bot", "created_at", "short_text")
+    list_filter = ("is_bot", "created_at")
+    search_fields = ("text", "user__username")
+
+    def short_text(self, obj):
+        return obj.text[:50]
+    short_text.short_description = "Текст"
+

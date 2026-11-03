@@ -1,9 +1,42 @@
 {% extends "cabinet_base.html" %}
 {% block title %}Сообщения — CampusMarket{% endblock %}
 {% block cabinet %}
-<div class="page-head"><h1>Сообщения</h1></div>
-{% if page.object_list %}
+<div class="page-head">
+  <h1>Сообщения</h1>
+  <a class="btn btn-primary btn-sm" href="{% url 'bot_chat' %}"><svg class="i"><use href="#i-bot"/></svg>Чат с консультантом</a>
+</div>
+
 <ul class="rows">
+  <!-- Закреплённый диалог: Чат-бот консультант -->
+  <li class="row-item bot-row-item">
+    <a class="thumb-sm bot-avatar" href="{% url 'bot_chat' %}" aria-label="CampusBot">
+      <svg class="i i-lg"><use href="#i-bot"/></svg>
+    </a>
+    <div class="row-main">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <a class="row-title" href="{% url 'bot_chat' %}">CampusBot · Консультант по каталогу</a>
+        <span class="badge badge-blue">Бот-помощник</span>
+      </div>
+      <span class="muted">
+        {% if bot_last %}
+          {{ bot_last.text|striptags|truncatechars:85 }} · {{ bot_last.created_at|date:"d.m.Y H:i" }}
+        {% else %}
+          Помогу подобрать учебники, технику, бесплатные вещи и отвечу на частые вопросы
+        {% endif %}
+      </span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <a class="btn btn-outline btn-sm" href="{% url 'bot_chat' %}">Открыть</a>
+      {% if bot_last %}
+      <form method="post" action="{% url 'bot_clear' %}" data-confirm="Удалить всю историю переписки с ботом?" style="margin: 0;">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button class="btn btn-outline btn-sm link-danger" type="submit" title="Удалить переписку"><svg class="i" style="width: 14px; height: 14px;"><use href="#i-trash"/></svg> Удалить</button>
+      </form>
+      {% endif %}
+    </div>
+  </li>
+
   {% for d in page.object_list %}
   <li class="row-item">
     <a class="thumb-sm" href="{% url 'request_detail' d.pk %}">{% with c=d.listing.cover %}{% if c %}<img src="{{ c.image.url }}" alt="">{% else %}<svg class="i"><use href="#i-image"/></svg>{% endif %}{% endwith %}</a>
@@ -15,8 +48,13 @@
   </li>
   {% endfor %}
 </ul>
-{% include "_pagination.html" %}
+
+{% if page.object_list %}
+  {% include "_pagination.html" %}
 {% else %}
-<div class="empty"><p>Переписок пока нет. Они появятся, когда вы отправите заявку или получите её.</p><a class="btn btn-outline" href="{% url 'catalog' %}">В каталог</a></div>
+  <div class="empty" style="margin-top: 14px; padding: 24px;">
+    <p class="muted">Личных переписок с другими студентами пока нет. Они появятся, когда вы отправите заявку или получите её.</p>
+    <a class="btn btn-outline btn-sm" href="{% url 'catalog' %}">Перейти в каталог</a>
+  </div>
 {% endif %}
 {% endblock %}

@@ -19,7 +19,7 @@
     <form method="post" action="{% url 'request_reject' deal.pk %}" data-confirm="Отклонить заявку?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-outline btn-sm">Отклонить</button></form>
   {% endif %}
   {% if not is_seller and deal.status == 'pending' or not is_seller and deal.status == 'accepted' %}
-    <form method="post" action="{% url 'request_cancel' deal.pk %}" data-confirm="Отменить заявку?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-outline btn-sm">Отменить заявку</button></form>
+    <form method="post" action="{% url 'request_cancel' deal.pk %}" data-confirm="Отменить заявку?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-outline btn-sm link-danger"><svg class="i" style="width: 14px; height: 14px;"><use href="#i-trash"/></svg> Отменить заявку</button></form>
   {% endif %}
   {% if is_seller and deal.listing.status == 'reserved' and deal.status == 'accepted' %}
     <form method="post" action="{% url 'listing_complete' deal.listing_id %}" data-confirm="Отметить вещь как переданную?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="btn btn-primary btn-sm">Отметить «передано»</button></form>
@@ -28,8 +28,16 @@
 
 <div class="chat" id="chat">
   {% for m in chat %}
-  <div class="bubble {% if m.sender_id == user.id %}me{% else %}them{% endif %}">
-    <p class="prewrap">{{ m.text }}</p>
+  <div class="bubble {% if m.sender_id == user.id %}me{% else %}them{% endif %}" id="msg-{{ m.pk }}">
+    <div class="bubble-content">
+      <p class="prewrap">{{ m.text }}</p>
+      {% if m.sender_id == user.id and can_write %}
+        <form method="post" action="{% url 'message_delete' m.pk %}" class="msg-del-form" data-confirm="Удалить это сообщение?">
+          {% csrf_token %}
+          <button type="submit" class="msg-del-btn" aria-label="Удалить сообщение" title="Удалить сообщение">×</button>
+        </form>
+      {% endif %}
+    </div>
     <time datetime="{{ m.created_at|date:'c' }}">{{ m.created_at|date:"d.m H:i" }}</time>
   </div>
   {% empty %}

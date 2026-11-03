@@ -23,10 +23,13 @@ urlpatterns = [
     path("requests/<int:pk>/accept/", views.request_accept, name="request_accept"),
     path("requests/<int:pk>/reject/", views.request_reject, name="request_reject"),
     path("requests/<int:pk>/cancel/", views.request_cancel, name="request_cancel"),
+    path("messages/<int:pk>/delete/", views.message_delete, name="message_delete"),
 
     path("my/listings/", views.my_listings, name="my_listings"),
     path("my/requests/", views.my_requests, name="my_requests"),
     path("my/messages/", views.my_messages, name="my_messages"),
+    path("my/messages/bot/", views.bot_chat, name="bot_chat"),
+    path("my/messages/bot/clear/", views.bot_clear, name="bot_clear"),
     path("my/favorites/", views.favorites, name="favorites"),
     path("my/reports/", views.my_reports, name="my_reports"),
 

@@ -8,15 +8,17 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Count, F, Max, Q
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from .bot import generate_bot_response, get_welcome_message
 from .forms import (DealRequestForm, FilterForm, ListingForm, MessageForm, ProfileForm,
                     RegisterForm, ReportForm)
-from .models import Category, DealRequest, Favorite, Listing, ListingImage, Message, Report
+from .models import (BotMessage, Category, DealRequest, Favorite, Listing, ListingImage, Message,
+                    Report)
 
 L = Listing.Status
 D = DealRequest.Status
@@ -369,14 +371,28 @@ def participant_request(request, pk):
 def request_detail(request, pk):
     deal = participant_request(request, pk)
     if request.method == "POST":
+        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
         if deal.status not in DealRequest.ACTIVE:
+            if is_ajax:
+                return JsonResponse({"error": "Заявка закрыта, писать сообщения больше нельзя."}, status=400)
             messages.error(request, "Заявка закрыта, писать сообщения больше нельзя.")
             return redirect("request_detail", pk=deal.pk)
         form = MessageForm(request.POST)
         if form.is_valid():
-            Message.objects.create(request=deal, sender=request.user, text=form.cleaned_data["text"])
+            msg = Message.objects.create(request=deal, sender=request.user, text=form.cleaned_data["text"])
+            if is_ajax:
+                return JsonResponse({
+                    "status": "ok",
+                    "id": msg.id,
+                    "text": msg.text,
+                    "created_at": msg.created_at.strftime("%d.%m %H:%M"),
+                    "is_me": True,
+                })
         else:
-            messages.error(request, form.errors["text"][0])
+            err = form.errors["text"][0] if "text" in form.errors else "Ошибка отправки"
+            if is_ajax:
+                return JsonResponse({"error": err}, status=400)
+            messages.error(request, err)
         return redirect("request_detail", pk=deal.pk)
     is_seller = deal.listing.seller_id == request.user.id
     other = deal.buyer if is_seller else deal.listing.seller
@@ -384,6 +400,21 @@ def request_detail(request, pk):
         "deal": deal, "chat": deal.messages.select_related("sender"), "is_seller": is_seller,
         "other": other, "can_write": deal.status in DealRequest.ACTIVE,
         "cover": deal.listing.images.first()})
+
+
+@login_required
+@require_POST
+def message_delete(request, pk):
+    msg = get_object_or_404(Message, pk=pk)
+    if msg.sender_id != request.user.id:
+        raise PermissionDenied
+    req_id = msg.request_id
+    msg.delete()
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"status": "ok"})
+    messages.success(request, "Сообщение удалено.")
+    return redirect("request_detail", pk=req_id)
+
 
 
 @login_required
@@ -471,7 +502,50 @@ def my_messages(request):
     chats = (DealRequest.objects.filter(Q(buyer=user) | Q(listing__seller=user))
              .select_related("listing", "listing__seller", "buyer").prefetch_related("listing__images")
              .annotate(last_at=Max("messages__created_at")).order_by(F("last_at").desc(nulls_last=True)))
-    return render(request, "market/my_messages.html", {"page": paginate(request, chats)})
+    bot_last = BotMessage.objects.filter(user=user).order_by("-created_at").first()
+    return render(request, "market/my_messages.html", {
+        "page": paginate(request, chats),
+        "bot_last": bot_last,
+    })
+
+
+@login_required
+def bot_chat(request):
+    user = request.user
+    if request.method == "POST":
+        text = request.POST.get("text", "").strip()
+        is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+        if text:
+            user_msg = BotMessage.objects.create(user=user, is_bot=False, text=text[:1000])
+            reply = generate_bot_response(user, text)
+            bot_msg = BotMessage.objects.create(user=user, is_bot=True, text=reply)
+            if is_ajax:
+                return JsonResponse({
+                    "status": "ok",
+                    "user_text": user_msg.text,
+                    "user_time": user_msg.created_at.strftime("%d.%m %H:%M"),
+                    "bot_reply": bot_msg.text,
+                    "bot_time": bot_msg.created_at.strftime("%d.%m %H:%M"),
+                })
+        elif is_ajax:
+            return JsonResponse({"error": "Сообщение не может быть пустым."}, status=400)
+        return redirect(safe_next(request, "bot_chat"))
+
+    if not BotMessage.objects.filter(user=user).exists():
+        welcome = get_welcome_message(user)
+        BotMessage.objects.create(user=user, is_bot=True, text=welcome)
+
+    chat = BotMessage.objects.filter(user=user).order_by("created_at")
+    return render(request, "market/bot_chat.html", {"chat": chat})
+
+
+@login_required
+@require_POST
+def bot_clear(request):
+    BotMessage.objects.filter(user=request.user).delete()
+    messages.success(request, "История переписки с ботом очищена.")
+    return redirect(safe_next(request, "bot_chat"))
+
 
 
 # ---------- избранное ----------

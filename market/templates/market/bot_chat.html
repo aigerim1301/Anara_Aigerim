@@ -1,0 +1,165 @@
+{% extends "cabinet_base.html" %}
+{% block title %}Чат с CampusBot — CampusMarket{% endblock %}
+{% block cabinet %}
+<div class="chat-head" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+  <div style="display: flex; gap: 12px; align-items: center;">
+    <div class="thumb-sm bot-avatar" style="width: 46px; height: 46px; border-radius: 50%;">
+      <svg class="i i-lg"><use href="#i-bot"/></svg>
+    </div>
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <h2 style="margin: 0; font-size: 18px;">CampusBot</h2>
+        <span class="badge badge-green" style="font-size: 11px;">● Онлайн</span>
+      </div>
+      <span class="muted" style="font-size: 12px;">Консультант по каталогу и покупкам</span>
+    </div>
+  </div>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <a class="btn btn-outline btn-sm" href="{% url 'my_messages' %}">← Все сообщения</a>
+    <form method="post" action="{% url 'bot_clear' %}" data-confirm="Удалить всю историю переписки с ботом?">
+      {% csrf_token %}
+      <button class="btn btn-outline btn-sm link-danger" type="submit" title="Удалить переписку"><svg class="i" style="width: 14px; height: 14px;"><use href="#i-trash"/></svg> Удалить историю</button>
+    </form>
+  </div>
+</div>
+
+<div class="chat" id="chat" style="min-height: 380px; max-height: 55vh; overflow-y: auto;">
+  {% for m in chat %}
+    {% if m.is_bot %}
+      <div class="bubble them bot-bubble">
+        <div class="bot-msg-header">
+          <svg class="i" style="width: 16px; height: 16px; color: var(--primary);"><use href="#i-bot"/></svg>
+          <strong>CampusBot</strong>
+        </div>
+        <div class="bot-msg-body">{{ m.text|safe }}</div>
+        <time datetime="{{ m.created_at|date:'c' }}">{{ m.created_at|date:"d.m H:i" }}</time>
+      </div>
+    {% else %}
+      <div class="bubble me">
+        <p class="prewrap">{{ m.text }}</p>
+        <time datetime="{{ m.created_at|date:'c' }}">{{ m.created_at|date:"d.m H:i" }}</time>
+      </div>
+    {% endif %}
+  {% empty %}
+    <p class="muted center">Диалог пуст. Напишите что-нибудь боту!</p>
+  {% endfor %}
+</div>
+
+<!-- Быстрые подсказки (Chips) -->
+<div class="bot-quick-chips" aria-label="Быстрые команды">
+  <span class="muted" style="font-size: 12px; margin-right: 2px; white-space: nowrap;">Быстрый вопрос:</span>
+  <button type="button" class="chip-btn" data-text="🎁 Бесплатные вещи">🎁 Бесплатные вещи</button>
+  <button type="button" class="chip-btn" data-text="📚 Учебники и книги">📚 Учебники</button>
+  <button type="button" class="chip-btn" data-text="💻 Электроника">💻 Электроника</button>
+  <button type="button" class="chip-btn" data-text="💰 До 500 сом">💰 До 500 сом</button>
+  <button type="button" class="chip-btn" data-text="🔄 Обмен">🔄 Обмен</button>
+  <button type="button" class="chip-btn" data-text="🛒 Как купить вещь?">🛒 Как купить?</button>
+  <button type="button" class="chip-btn" data-text="📢 Как подать объявление?">📢 Как продать?</button>
+  <button type="button" class="chip-btn" data-text="🛡️ Правила безопасности">🛡️ Безопасность</button>
+</div>
+
+<form class="chat-form" id="bot-form" method="post">
+  {% csrf_token %}
+  <textarea id="bot-input" name="text" rows="1" maxlength="1000" placeholder="Спросите что угодно о каталоге (например: «найди ноутбук» или «бесплатно»)…" aria-label="Сообщение боту" required autofocus></textarea>
+  <button class="btn btn-primary" type="submit" aria-label="Отправить"><svg class="i"><use href="#i-send"/></svg></button>
+</form>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var chat = document.getElementById("chat");
+    var input = document.getElementById("bot-input");
+    var form = document.getElementById("bot-form");
+
+    function scrollBottom() {
+      if (chat) {
+        chat.scrollTop = chat.scrollHeight;
+      }
+    }
+    scrollBottom();
+
+    function formatTime() {
+      var d = new Date();
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mm = String(d.getMinutes()).padStart(2, "0");
+      return hh + ":" + mm;
+    }
+
+    function addBubble(content, isMe, timeStr, isHtml) {
+      var b = document.createElement("div");
+      b.className = "bubble " + (isMe ? "me" : "them bot-bubble");
+      var html = "";
+      if (!isMe) {
+        html += '<div class="bot-msg-header"><svg class="i" style="width: 16px; height: 16px; color: var(--primary);"><use href="#i-bot"/></svg><strong>CampusBot</strong></div>';
+        html += '<div class="bot-msg-body">' + content + '</div>';
+      } else {
+        var p = document.createElement("p");
+        p.className = "prewrap";
+        p.textContent = content;
+        html = p.outerHTML;
+      }
+      html += '<time>' + (timeStr || formatTime()) + '</time>';
+      b.innerHTML = html;
+      chat.appendChild(b);
+      scrollBottom();
+      return b;
+    }
+
+    function sendAsync(textVal) {
+      var query = (textVal || "").trim();
+      if (!query) return;
+
+      // 1. Отображаем сообщение пользователя
+      addBubble(query, true);
+      input.value = "";
+
+      // 2. Отображаем индикатор "CampusBot печатает..."
+      var typing = addBubble('<span class="muted" style="display:inline-flex; align-items:center; gap:8px;"><span class="dot-typing"></span> CampusBot ищет в каталоге…</span>', false, null, true);
+
+      var fd = new FormData(form);
+      fd.set("text", query);
+
+      fetch(form.action || window.location.href, {
+        method: "POST",
+        body: fd,
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error("HTTP error " + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        if (typing && typing.parentNode) typing.remove();
+        if (data.status === "ok") {
+          addBubble(data.bot_reply, false, data.bot_time, true);
+        } else if (data.error) {
+          addBubble(data.error, false, null, false);
+        }
+      })
+      .catch(function(err) {
+        if (typing && typing.parentNode) typing.remove();
+        addBubble("Произошла ошибка при отправке сообщения. Пожалуйста, попробуйте снова.", false, null, false);
+      });
+    }
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      sendAsync(input.value);
+    });
+
+    // Отправка по клику на чип
+    document.querySelectorAll(".chip-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        sendAsync(this.dataset.text);
+      });
+    });
+
+    // Отправка по Enter (Shift+Enter — перевод строки)
+    input.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendAsync(input.value);
+      }
+    });
+  });
+</script>
+{% endblock %}
